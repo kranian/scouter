@@ -24,6 +24,7 @@ import lombok.Setter;
 import scouter.lang.pack.AlertLevelEnum;
 import scouter.lang.pack.AlertPack;
 import scouterx.webapp.framework.client.model.AgentModelThread;
+import scouterx.webapp.framework.client.model.TextProxy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,8 +72,25 @@ public class SAlert {
         Map<String, Object> tagMap = p.tags.toMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toJavaObject()));
 
+
         String objName = AgentModelThread.getInstance().getAgentObject(p.objHash) == null ? "UNKNOWN"
                 : AgentModelThread.getInstance().getAgentObject(p.objHash).getObjName();
+
+        return SAlert.builder()
+                .time(p.time)
+                .objType(p.objType)
+                .objHash(p.objHash)
+                .objName(objName)
+                .level(AlertLevelEnum.of(p.level))
+                .title(p.title)
+                .message(p.message)
+                .tagMap(tagMap)
+                .build();
+    }
+    public static SAlert of(AlertPack p,String yyyymmdd,int serverId) {
+        Map<String, Object> tagMap = p.tags.toMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toJavaObject()));
+        String objName = TextProxy.object.getTextIfNullDefault(Long.parseLong(yyyymmdd), p.objHash, serverId);
 
         return SAlert.builder()
                 .time(p.time)

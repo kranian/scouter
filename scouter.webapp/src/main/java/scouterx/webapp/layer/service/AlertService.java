@@ -22,10 +22,14 @@ import scouterx.webapp.layer.consumer.AlertScriptingConsumer;
 import scouterx.webapp.model.alertscript.ScriptingLoadData;
 import scouterx.webapp.model.alertscript.ScriptingLogStateData;
 import scouterx.webapp.model.alertscript.ScriptingSaveStateData;
+import scouterx.webapp.model.scouter.SAlert;
+import scouterx.webapp.request.LoadTimeAlertRequest;
 import scouterx.webapp.request.RealTimeAlertRequest;
 import scouterx.webapp.request.SetConfigRequest;
 import scouterx.webapp.view.RealTimeAlertView;
 import scouterx.webapp.layer.consumer.AlertConsumer;
+
+import java.util.List;
 
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
@@ -58,5 +62,9 @@ public class AlertService {
 
     public ScriptingLogStateData readAlertScripting(int serverId, long loop, long index) {
         return this.alertScriptingConsumer.readAlertScripting(serverId,loop,index);
+    }
+
+    public RealTimeAlertView retrieveLoadTimeAlert(LoadTimeAlertRequest request) {
+        return this.alertConsumer.retrieveLoadTimeAlert(request);
     }
 }

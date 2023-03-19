@@ -48,8 +48,12 @@ public class PluginLoader extends Thread {
 	public void run() {
 		while (true) {
 			try {
-				File root = Configure.getInstance().plugin_dir;
-				reloadIfModified(root);
+				Configure configure = Configure.getInstance();
+				File root = configure.plugin_dir;
+				boolean isEnabled = configure.plugin_enabled;
+				if(isEnabled) {
+					reloadIfModified(root);
+				}
 			} catch (Throwable t) {
 				Logger.println("A160", t.toString());
 			}

@@ -45,6 +45,10 @@ public class ParamConstant {
     public static final String HASH = "hash";
     public static final String TYPE = "type";
 
+    public static final String COUNT = "count";
+    public static final String LEVEL = "level";
+    public static final String OBJECT = "object";
+
     public static final String OFFSET_LOOP = "loop";
     public static final String OFFSET_INDEX = "index";
 
