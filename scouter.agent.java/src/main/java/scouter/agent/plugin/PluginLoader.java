@@ -32,6 +32,7 @@ import scouter.util.ThreadUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.StringReader;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 public class PluginLoader extends Thread {
@@ -210,7 +211,7 @@ public class PluginLoader extends Thread {
 					new StringBuilder().append(bodyPrefix).append(bodyTable.get(METHOD_END)).append("\n}").toString());
 			method_reject.setBody(
 					new StringBuilder().append(bodyPrefix).append(bodyTable.get(METHOD_REJECT)).append("\n}").toString());
-			Class<?> c = impl.toClass(Wrapper.class);
+			Class c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
 			AbstractHttpService plugin = (AbstractHttpService) c.newInstance();
 			plugin.lastModified = script.lastModified();
 			Logger.println("PLUG-IN : " + AbstractHttpService.class.getName() + " " + script.getName() + " loaded #"
@@ -317,7 +318,7 @@ public class PluginLoader extends Thread {
 			sb.append(END_BODY);
 			sb.append("\n}");
 			method_end.setBody(sb.toString());
-			c = impl.toClass(Wrapper.class);
+			c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
 			AbstractAppService plugin = (AbstractAppService) c.newInstance();
 			plugin.lastModified = script.lastModified();
 			Logger.println("PLUG-IN : " + AbstractAppService.class.getName() + " " + script.getName() + " loaded #"
@@ -431,7 +432,7 @@ public class PluginLoader extends Thread {
 			sb.append("\n}");
 			method_this.setBody(sb.toString());
 			//c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
-			c = impl.toClass(scouter.agent.plugin.impl.Neighbor.class);
+			c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
 			AbstractCapture plugin = (AbstractCapture) c.newInstance();
 			plugin.lastModified = script.lastModified();
 			Logger.println("PLUG-IN : " + AbstractCapture.class.getName() + " " + script.getName() + " loaded #"
@@ -493,7 +494,7 @@ public class PluginLoader extends Thread {
 			sb.append("\n}");
 			method.setBody(sb.toString());
 			//c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
-			c = impl.toClass(Wrapper.class);
+			c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
 			AbstractJdbcPool plugin = (AbstractJdbcPool) c.newInstance();
 			plugin.lastModified = script.lastModified();
 			Logger.println("PLUG-IN : " + AbstractJdbcPool.class.getName() + " " + script.getName() + " loaded #"
@@ -554,7 +555,7 @@ public class PluginLoader extends Thread {
 			sb.append("\n}");
 			method.setBody(sb.toString());
 			//c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
-			c = impl.toClass(Wrapper.class);
+			c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
 			AbstractHttpCall plugin = (AbstractHttpCall) c.newInstance();
 			plugin.lastModified = script.lastModified();
 			Logger.println("PLUG-IN : " + AbstractHttpCall.class.getName() + " " + script.getName() + " loaded #"
@@ -609,7 +610,7 @@ public class PluginLoader extends Thread {
             body.append("\n}");
             method_counter.setBody(body.toString());
 //            Class c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
-            Class c = impl.toClass(Wrapper.class);
+            Class c = impl.toClass(new URLClassLoader(new URL[0], this.getClass().getClassLoader()), null);
             AbstractCounter plugin = (AbstractCounter) c.newInstance();
             plugin.lastModified = script.lastModified();
             Logger.println("PLUG-IN : " + AbstractCounter.class.getName() + " " + script.getName() + " loaded #"
