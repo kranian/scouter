@@ -50,9 +50,9 @@ public class PluginLoader extends Thread {
 		while (true) {
 			try {
 				Configure configure = Configure.getInstance();
-				File root = configure.plugin_dir;
-				boolean isEnabled = configure.plugin_enabled;
+				boolean isEnabled = configure.scouter_plugin_enabled;
 				if(isEnabled) {
+					File root = configure.plugin_dir;
 					reloadIfModified(root);
 				}
 			} catch (Throwable t) {
