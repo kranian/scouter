@@ -53,6 +53,7 @@ import java.util.Set;
 public class Configure extends Thread {
     public static boolean JDBC_REDEFINED = false;
     private static final Configure instance;
+
     private long last_load_time = -1;
     public Properties property = new Properties();
     private boolean running = true;
@@ -73,6 +74,8 @@ public class Configure extends Thread {
         instance.setName(ThreadUtil.getName(instance));
         instance.start();
     }
+
+
 
     public static final Configure getInstance() {
         return instance;
@@ -188,6 +191,19 @@ public class Configure extends Thread {
 
     @ConfigDesc("Number of stack profile lines in occurrence of error")
     public int profile_fullstack_max_lines = 0;
+
+    @ConfigDesc("Whether to monitor the number of connection pool usage ")
+    public boolean hook_default_pool_enabled = true;
+    public boolean hook_hikari_pool_enabled= true;
+    public boolean hook_tomcat_pool_enabled= true;
+    public boolean hook_dbcp_pool_enabled= true;
+    public boolean hook_weblogic_pool_enabled= true;
+    public boolean hook_jeus_pool_enabled= true;
+    public boolean hook_jboss_pool_enabled= true;
+    public boolean hook_jedis_pool_enabled= true;
+
+    public boolean hook_c3p0_pool_enabled= true;
+
 
     @ConfigDesc("Escaping literal parameters for normalizing the query")
     public boolean profile_sql_escape_enabled = true;
@@ -1031,6 +1047,19 @@ public class Configure extends Thread {
         this._log_datasource_lookup_enabled = getBoolean("_log_datasource_lookup_enabled", true);
         this.profile_connection_open_enabled = getBoolean("profile_connection_open_enabled", true);
         this._summary_connection_leak_fullstack_enabled = getBoolean("_summary_connection_leak_fullstack_enabled", false);
+
+        // POOL Counter
+        this.hook_default_pool_enabled=getBoolean("hook_default_pool_enabled",true);
+        this.hook_hikari_pool_enabled = getBoolean("hook_hikari_pool_enabled", true);
+        this.hook_tomcat_pool_enabled = getBoolean("hook_tomcat_pool_enabled", true);
+        this.hook_dbcp_pool_enabled = getBoolean("hook_dbcp_pool_enabled", true);
+        this.hook_weblogic_pool_enabled = getBoolean("hook_weblogic_pool_enabled", true);
+        this.hook_jeus_pool_enabled = getBoolean("hook_jeus_pool_enabled", true);
+        this.hook_jboss_pool_enabled = getBoolean("hook_jboss_pool_enabled", true);
+        this.hook_jedis_pool_enabled = getBoolean("hook_jedis_pool_enabled", true);
+        this.hook_c3p0_pool_enabled = getBoolean("hook_c3p0_pool_enabled", true);
+
+
         this.hook_method_patterns = getValue("hook_method_patterns", "");
         this.hook_method_exclude_patterns = getValue("hook_method_exclude_patterns", "");
         this.hook_method_access_public_enabled = getBoolean("hook_method_access_public_enabled", true);
@@ -1356,6 +1385,7 @@ public class Configure extends Thread {
 
         resetObjInfo();
         setStaticContents();
+        ConfPool.apply(this);
     }
 
     public String getObjExtType() {

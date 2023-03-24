@@ -86,6 +86,13 @@ public class ApicallASM implements IASM, Opcodes {
                         "Lorg/springframework/web/client/ResponseExtractor;" +
                         ")Lorg/springframework/util/concurrent/ListenableFuture;");
 
+        AsmUtil.add(reserved, "org/apache/http/impl/client/MinimalHttpClient", "doExecute");
+        AsmUtil.add(reserved, "org/apache/http/impl/client/AbstractHttpClient", "doExecute");
+        AsmUtil.add(reserved, "org/apache/http/impl/client/AbstractHttpClient", "execute(Lorg/apache/http/HttpHost;Lorg/apache/http/HttpRequest;Lorg/apache/http/protocol/HttpContext;)Lorg/apache/http/HttpResponse;");
+        AsmUtil.add(reserved, "org/springframework/web/client/AbstractClientHttpRequest", "execute()Lorg/springframework/http/client/ClientHttpResponse;");
+        AsmUtil.add(reserved, "org/springframework/web/client/Netty4ClientHttpRequest", "execute()Lorg/springframework/http/client/ClientHttpResponse;");
+        AsmUtil.add(reserved, "org/springframework/web/client/OkHttpClientHttpRequest", "execute()Lorg/springframework/http/client/ClientHttpResponse;");
+
         AsmUtil.add(reserved, "jdk/internal/net/http/HttpClientImpl", "send(" +
                 "Ljava/net/http/HttpRequest;" +
                 "Ljava/net/http/HttpResponse$BodyHandler;" +
