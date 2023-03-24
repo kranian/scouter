@@ -847,6 +847,8 @@ public class Configure extends Thread {
     @ConfigDesc("Path to jsp to collect enduser data")
     public String enduser_trace_endpoint_url = "/_scouter_browser.jsp";
 
+    @ConfigDesc("Whether the plugin action is loaded")
+    public boolean scouter_plugin_enabled;
     //Experimental(ignoreset)
     public boolean __experimental = false;
     public boolean __control_connection_leak_autoclose_enabled = false;
@@ -1200,6 +1202,7 @@ public class Configure extends Thread {
         this._psts_dump_max_count = getInt("_psts_dump_max_count", 100);
         this._psts_progressive_reactor_thread_trace_enabled = getBoolean("_psts_progressive_reactor_dump_enabled", true);
 
+        this.scouter_plugin_enabled = getBoolean("scouter_plugin_enabled",true);
         // 웹시스템으로 부터 WAS 사이의 성능과 어떤 웹서버가 요청을 보내 왔는지를 추적하는 기능을 ON/OFF하고
         // 관련 키정보를 지정한다.
         this.trace_webserver_enabled = getBoolean("trace_webserver_enabled", false);

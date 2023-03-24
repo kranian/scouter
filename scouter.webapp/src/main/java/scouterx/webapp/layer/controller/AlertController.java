@@ -23,6 +23,8 @@ import scouterx.webapp.layer.service.AlertService;
 import scouterx.webapp.model.alertscript.ScriptingLoadData;
 import scouterx.webapp.model.alertscript.ScriptingLogStateData;
 import scouterx.webapp.model.alertscript.ScriptingSaveStateData;
+import scouterx.webapp.model.scouter.SAlert;
+import scouterx.webapp.request.LoadTimeAlertRequest;
 import scouterx.webapp.request.RealTimeAlertRequest;
 import scouterx.webapp.request.SetConfigRequest;
 import scouterx.webapp.view.CommonResultView;
@@ -32,6 +34,7 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
@@ -57,6 +60,13 @@ public class AlertController {
     public CommonResultView<RealTimeAlertView> retrieveRealTimeAlert(@BeanParam @Valid RealTimeAlertRequest request) {
 
         return CommonResultView.success(alertService.retrieveRealTimeAlert(request));
+    }
+
+    @GET
+    @Path("/history/{yyyymmdd}/{offset1}/{offset2}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CommonResultView<RealTimeAlertView> retrieveLoadTimeAlert(@BeanParam @Valid LoadTimeAlertRequest request) {
+       return CommonResultView.success(alertService.retrieveLoadTimeAlert(request));
     }
 
     /**
