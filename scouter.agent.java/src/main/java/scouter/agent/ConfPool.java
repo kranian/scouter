@@ -33,7 +33,7 @@ public class ConfPool {
         hybris_pool_enabled = conf.getBoolean("hybris_pool_enabled", true);
         c3p0_pool_enabled = conf.getBoolean("c3p0_pool_enabled", true);
         druid_pool_enabled = conf.getBoolean("druid_pool_enabled", false);
-        pool_detail_enabled = conf.getBoolean("pool_detail_enabled", true);
+        pool_detail_enabled = conf.getBoolean("pool_detail_enabled", false);
         debug_pool_detail_enabled = conf.getBoolean("debug_pool_detail_enabled", false);
         if (dbcp_pool_enabled || hikari_pool_enabled) {
             weblogic_ds_enabled = false;

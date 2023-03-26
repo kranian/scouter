@@ -6,8 +6,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import scouter.agent.ClassDesc;
 import scouter.agent.Configure;
+import scouter.agent.Logger;
 import scouter.agent.asm.util.AsmUtil;
-import scouter.agent.counter.task.pools.BasicDataSourcePool;
+import scouter.agent.counter.task.pools.*;
 import scouter.agent.trace.JDBCPool;
 
 import java.util.HashMap;
@@ -26,9 +27,9 @@ public class ConnectionPoolASM implements IASM, Opcodes {
 
     private void setDefaultPoolClass() {
         Configure configure = Configure.getInstance();
-//        if (configure.hook_hikari_pool_enabled) {
-//            this.target.put("com/zaxxer/hikari/pool/HikariPool", "HikariPool");
-//        }
+        if (configure.hook_hikari_pool_enabled) {
+            this.target.put("com/zaxxer/hikari/pool/HikariPool", HikariConnectionPool.className);
+        }
 
         if (configure.hook_dbcp_pool_enabled) {
             this.target.put("org/apache/commons/dbcp/BasicDataSource", BasicDataSourcePool.className);
@@ -37,17 +38,17 @@ public class ConnectionPoolASM implements IASM, Opcodes {
             this.target.put("org/apache/tomcat/dbcp/dbcp2/BasicDataSource", BasicDataSourcePool.className);
         }
 
-//        if (configure.hook_tomcat_pool_enabled) {
-//            this.target.put("org/apache/tomcat/jdbc/pool/ConnectionPool", TomcatConnnPool.className);
-//        }
+        if (configure.hook_tomcat_pool_enabled) {
+            this.target.put("org/apache/tomcat/jdbc/pool/ConnectionPool", TomcatConnectionPool.className);
+        }
 
 //        if (configure.hook_weblogic_pool_enabled) {
 //            this.target.put("weblogic/jdbc/common/internal/ConnectionPool", WebLogicConnPool.classNameId);
 //        }
 
-//        if (configure.hook_jeus_pool_enabled) {
-//            this.target.put("jeus/jdbc/connectionpool/ConnectionPoolImpl", JeusConnPool.className);
-//        }
+        if (configure.hook_jeus_pool_enabled) {
+            this.target.put("jeus/jdbc/connectionpool/ConnectionPoolImpl", JeusConnectionPool.className);
+        }
 //
 //        if (configure.hook_jboss_pool_enabled) {
 //            this.target.put("org/jboss/jca/core/connectionmanager/pool/PoolStatisticsImpl", JBossConnPool.className);
@@ -57,9 +58,9 @@ public class ConnectionPoolASM implements IASM, Opcodes {
 //            this.target.put("redis/clients/jedis/JedisPool", RedisJedisPool.className);
 //        }
 //
-//        if (configure.hook_c3p0_pool_enabled) {
-//            this.target.put("com/mchange/v2/c3p0/ComboPooledDataSource", C3P0DataSourcePool.className);
-//        }
+        if (configure.hook_c3p0_pool_enabled) {
+            this.target.put("com/mchange/v2/c3p0/ComboPooledDataSource", C3P0DataSourcePool.className);
+        }
 
 
 
@@ -88,11 +89,13 @@ class ConnectionPoolCV extends ClassVisitor implements Opcodes{
         if (mv == null ) {
             return mv;
         }
+
         if("<init>".equals(name)){
-            return mv;
+            return new ConnectionPoolMV(access,desc,mv,this.classId);
         }
 
-        return new ConnectionPoolMV(access,desc,mv,this.classId);
+        return mv;
+
     }
 }
 class ConnectionPoolMV extends LocalVariablesSorter implements Opcodes{

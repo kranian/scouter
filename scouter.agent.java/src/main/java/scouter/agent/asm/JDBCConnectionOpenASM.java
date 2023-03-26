@@ -58,9 +58,6 @@ public class JDBCConnectionOpenASM implements IASM, Opcodes {
 		AsmUtil.add(reserved, "jeus/jdbc/datasource/DataSourceWrapper", "getConnection()Ljava/sql/Connection;");
 		AsmUtil.add(reserved, "weblogic/jdbc/common/internal/RmiDataSource", "getConnection()Ljava/sql/Connection;");
 		AsmUtil.add(reserved, "org/jboss/jca/adapters/jdbc/WrapperDataSource", "getConnection()Ljava/sql/Connection;");
-		AsmUtil.add(reserved, "com/jolbox/bonecp/BoneCPDataSource", "getConnection()Ljava/sql/Connection;");
-		AsmUtil.add(reserved, "com/alibaba/druid/pool/DruidPooledConnection", "getConnection()Ljava/sql/Connection;");
-		AsmUtil.add(reserved, "bmt/ds/MyDataSource", "getConnection()Ljava/sql/Connection;");
 
         for(int i = JDBCTargetRegister.klassMethod.size() - 1; i >= 0; i--) {
             AsmUtil.add(reserved, JDBCTargetRegister.klassMethod.get(i).getLeft(), JDBCTargetRegister.klassMethod.get(i).getRight());
