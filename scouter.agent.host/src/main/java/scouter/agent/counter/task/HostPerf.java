@@ -50,6 +50,7 @@ import scouter.util.LongKeyLinkedMap;
 import scouter.util.ThreadUtil;
 
 import java.util.List;
+import java.util.Objects;
 
 public class HostPerf {
 	SystemInfo si = new SystemInfo();
@@ -77,6 +78,7 @@ public class HostPerf {
 		Configure conf = Configure.getInstance();
 
 		CentralProcessor processor = hal.getProcessor();
+
 		long[] oldTicks = processor.getSystemCpuLoadTicks();
 		ThreadUtil.sleep(500);
 		long[] ticks = processor.getSystemCpuLoadTicks();
@@ -89,9 +91,17 @@ public class HostPerf {
 		long idle = ticks[CentralProcessor.TickType.IDLE.getIndex()] - oldTicks[CentralProcessor.TickType.IDLE.getIndex()];
 		long sys = ticks[CentralProcessor.TickType.SYSTEM.getIndex()] - oldTicks[CentralProcessor.TickType.SYSTEM.getIndex()];
 		long user = ticks[CentralProcessor.TickType.USER.getIndex()] - oldTicks[CentralProcessor.TickType.USER.getIndex()];
-		float cpuUsage = total > 0 ? (float) (total - idle) / total : 0f;
+
+		float cpuUsage = total > 0 ? (float)(total - idle) / total : 0f;
+		boolean isAix = Objects.equals(Configure.getInstance().getObjDetectedType(),CounterConstants.AIX);
+
+		if(isAix){
+			cpuUsage = cpuUsage / ticks.length;
+		}
+
 		float sysUsage = total > 0 ? (float) sys / total : 0f;
 		float userUsage = total > 0 ? (float) user / total : 0f;
+
 		cpuUsage *= 100;
 		sysUsage *= 100;
 		userUsage *= 100;
