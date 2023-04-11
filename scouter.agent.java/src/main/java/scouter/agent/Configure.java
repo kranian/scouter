@@ -1062,7 +1062,7 @@ public class Configure extends Thread {
         this.hook_jdbc_stmt_classes = getValue("hook_jdbc_stmt_classes", "");
         this.hook_jdbc_rs_classes = getValue("hook_jdbc_rs_classes", "");
         this.hook_jdbc_wrapping_driver_patterns = getValue("hook_jdbc_wrapping_driver_patterns", "");
-        this.hook_jdbc_oracle_cstat_capture_enabled = getBoolean("hook_jdbc_oracle_cstat_capture_enabled", false);
+        this.hook_jdbc_oracle_cstat_capture_enabled = getBoolean("hook_jdbc_oracle_cstat_capture_enabled", true);
         this.hook_exception_class_patterns = getValue("hook_exception_class_patterns", "");
         this.hook_exception_exclude_class_patterns = getValue("hook_exception_exclude_class_patterns", "");
         if(StringUtil.isEmpty(this.hook_exception_exclude_class_patterns)) {
