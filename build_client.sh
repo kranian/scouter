@@ -3,7 +3,6 @@
 ##########################
 # download maven from :
 #   https://maven.apache.org
-JAVA_11_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 if [ ! -z "${JAVA_11_HOME}" ]; then
 	echo JAVA_11_HOME: ${JAVA_11_HOME}
