@@ -133,7 +133,7 @@ class PreparedStatementCV extends ClassVisitor implements Opcodes {
 			return new PsInitMV(access, desc, mv, owner);
 
 		} else {
-			String targetDesc = PsSetMV.getSetSignature(name);
+			String targetDesc = PsSetMV.getSetSignature(this.owner,name);
 			if (targetDesc != null) {
 				if (targetDesc.equals(desc)) {
 					return new PsSetMV(access, name, desc, mv, owner);

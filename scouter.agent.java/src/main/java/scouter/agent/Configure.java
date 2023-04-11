@@ -667,6 +667,9 @@ public class Configure extends Thread {
     @ConfigValueType(ValueType.COMMA_SEPARATED_VALUE)
     public String hook_jdbc_wrapping_driver_patterns = "";
 
+    @ConfigDesc("CallStateMent Set Oracle Procedure Parameter Capture")
+    public boolean hook_jdbc_oracle_cstat_capture_enabled = true;
+
     @ConfigDesc("Exception class patterns - These will seem as error on xlog view.\n (ex) my.app.BizException,my.app.exception.*Exception")
     @ConfigValueType(ValueType.COMMA_SEPARATED_VALUE)
     public String hook_exception_class_patterns = "";
@@ -1059,6 +1062,7 @@ public class Configure extends Thread {
         this.hook_jdbc_stmt_classes = getValue("hook_jdbc_stmt_classes", "");
         this.hook_jdbc_rs_classes = getValue("hook_jdbc_rs_classes", "");
         this.hook_jdbc_wrapping_driver_patterns = getValue("hook_jdbc_wrapping_driver_patterns", "");
+        this.hook_jdbc_oracle_cstat_capture_enabled = getBoolean("hook_jdbc_oracle_cstat_capture_enabled", false);
         this.hook_exception_class_patterns = getValue("hook_exception_class_patterns", "");
         this.hook_exception_exclude_class_patterns = getValue("hook_exception_exclude_class_patterns", "");
         if(StringUtil.isEmpty(this.hook_exception_exclude_class_patterns)) {
