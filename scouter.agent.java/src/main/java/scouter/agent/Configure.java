@@ -738,6 +738,11 @@ public class Configure extends Thread {
     public boolean _hook_dbconn_enabled = true;
     @ConfigDesc("")
     public boolean _hook_cap_enabled = true;
+
+
+    @ConfigDesc("")
+    public boolean _hook_file_enabled = true;
+
     @ConfigDesc("")
     public boolean _hook_methods_enabled = true;
     @ConfigDesc("")

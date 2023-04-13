@@ -29,22 +29,8 @@ import scouter.agent.error.RESULTSET_LEAK_SUSPECT;
 import scouter.agent.error.STATEMENT_LEAK_SUSPECT;
 import scouter.agent.error.USERTX_NOT_CLOSE;
 import scouter.agent.netio.data.DataProxy;
-import scouter.agent.plugin.AbstractPlugin;
-import scouter.agent.plugin.PluginAppServiceTrace;
-import scouter.agent.plugin.PluginBackThreadTrace;
-import scouter.agent.plugin.PluginCaptureTrace;
-import scouter.agent.plugin.PluginHttpServiceTrace;
-import scouter.agent.plugin.PluginSpringControllerCaptureTrace;
-import scouter.agent.proxy.HttpTraceFactory;
-import scouter.agent.proxy.IHttpTrace;
-import scouter.agent.proxy.IKafkaTracer;
-import scouter.agent.proxy.ILettuceTrace;
-import scouter.agent.proxy.IReactiveSupport;
-import scouter.agent.proxy.IRedissonTrace;
-import scouter.agent.proxy.KafkaTraceFactory;
-import scouter.agent.proxy.LettuceTraceFactory;
-import scouter.agent.proxy.ReactiveSupportFactory;
-import scouter.agent.proxy.RedissonTraceFactory;
+import scouter.agent.plugin.*;
+import scouter.agent.proxy.*;
 import scouter.agent.summary.ServiceSummary;
 import scouter.agent.wrapper.async.WrTask;
 import scouter.agent.wrapper.async.WrTaskCallable;
@@ -55,24 +41,9 @@ import scouter.lang.pack.AlertPack;
 import scouter.lang.pack.DroppedXLogPack;
 import scouter.lang.pack.XLogPack;
 import scouter.lang.pack.XLogTypes;
-import scouter.lang.step.DispatchStep;
-import scouter.lang.step.HashedMessageStep;
-import scouter.lang.step.MessageStep;
-import scouter.lang.step.MethodStep;
-import scouter.lang.step.MethodStep2;
-import scouter.lang.step.ParameterizedMessageStep;
-import scouter.lang.step.ThreadCallPossibleStep;
+import scouter.lang.step.*;
 import scouter.lang.value.MapValue;
-import scouter.util.ArrayUtil;
-import scouter.util.ByteArrayKeyLinkedMap;
-import scouter.util.HashUtil;
-import scouter.util.Hexa32;
-import scouter.util.IPUtil;
-import scouter.util.KeyGen;
-import scouter.util.ObjectUtil;
-import scouter.util.StringUtil;
-import scouter.util.SysJMX;
-import scouter.util.ThreadUtil;
+import scouter.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -2147,6 +2118,73 @@ public class TraceMain {
                 meterInteraction.add(elapsed, thr != null);
             }
         }
+    }
+
+    //--
+    public static Object openWriteFileStart(Object file) {
+        TraceContext ctx = TraceContextManager.getContext();
+        if (ctx == null) {
+            return null;
+        }
+
+        HashedMessageStep step = new HashedMessageStep();
+        step.hash = DataProxy.sendHashedMessage(file == null ? "file write: null" : "file write: " + file);
+        step.start_time = (int) (System.currentTimeMillis() - ctx.startTime);
+        step.time = 0;
+        ctx.profile.push(step);
+        return new LocalContext(ctx,step);
+
+
+    }
+    public static void openWriteFileEnd(Object localContext, Throwable thr) {
+        if(localContext != null){
+            Logger.trace("openWriteFileEnd file:write="+localContext+thr);
+            LocalContext lctx = (LocalContext)localContext;
+            TraceContext tctx = lctx.context;
+            if(tctx != null && thr == null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                tctx.profile.pop(stepSingle);
+            }else if(tctx != null && thr != null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                tctx.profile.pop(stepSingle);
+                int hash = DataProxy.sendError(thr.toString());
+                tctx.error = hash;
+            }
+        }
+
+    }
+    public static Object openReadFileStart(Object file) {
+        TraceContext ctx = TraceContextManager.getContext();
+        if (ctx == null) {
+            return null;
+        }
+
+        HashedMessageStep step = new HashedMessageStep();
+        step.hash = DataProxy.sendHashedMessage(file == null ? "file open: noname" : "file open: " + file);
+        step.start_time = (int) (System.currentTimeMillis() - ctx.startTime);
+        step.time = 0;
+        ctx.profile.push(step);
+        return new LocalContext(ctx,step);
+    }
+    public static void openReadFileEnd(Object localContext, Throwable thr) {
+        if(localContext != null){
+            LocalContext lctx = (LocalContext)localContext;
+            TraceContext tctx = lctx.context;
+            if(tctx != null && thr == null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                tctx.profile.pop(stepSingle);
+            }else if(tctx != null && thr != null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                tctx.profile.pop(stepSingle);
+                int hash = DataProxy.sendError(thr.toString());
+                tctx.error = hash;
+            }
+        }
+
     }
 
 }
