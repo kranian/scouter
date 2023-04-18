@@ -2143,11 +2143,11 @@ public class TraceMain {
             TraceContext tctx = lctx.context;
             if(tctx != null && thr == null){
                 HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
-                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
                 tctx.profile.pop(stepSingle);
             }else if(tctx != null && thr != null){
                 HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
-                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
                 tctx.profile.pop(stepSingle);
                 int hash = DataProxy.sendError(thr.toString());
                 tctx.error = hash;
@@ -2174,11 +2174,11 @@ public class TraceMain {
             TraceContext tctx = lctx.context;
             if(tctx != null && thr == null){
                 HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
-                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
                 tctx.profile.pop(stepSingle);
             }else if(tctx != null && thr != null){
                 HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
-                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime);
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
                 tctx.profile.pop(stepSingle);
                 int hash = DataProxy.sendError(thr.toString());
                 tctx.error = hash;
