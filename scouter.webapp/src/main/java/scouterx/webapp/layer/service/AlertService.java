@@ -18,22 +18,53 @@
 
 package scouterx.webapp.layer.service;
 
+import scouterx.webapp.layer.consumer.AlertScriptingConsumer;
+import scouterx.webapp.model.alertscript.ScriptingLoadData;
+import scouterx.webapp.model.alertscript.ScriptingLogStateData;
+import scouterx.webapp.model.alertscript.ScriptingSaveStateData;
+import scouterx.webapp.model.scouter.SAlert;
+import scouterx.webapp.request.LoadTimeAlertRequest;
 import scouterx.webapp.request.RealTimeAlertRequest;
+import scouterx.webapp.request.SetConfigRequest;
 import scouterx.webapp.view.RealTimeAlertView;
 import scouterx.webapp.layer.consumer.AlertConsumer;
+
+import java.util.List;
 
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
  */
 public class AlertService {
     private final AlertConsumer alertConsumer;
-
+    private final AlertScriptingConsumer alertScriptingConsumer;
     public AlertService() {
         this.alertConsumer = new AlertConsumer();
+        this.alertScriptingConsumer = new AlertScriptingConsumer();
     }
 
     public RealTimeAlertView retrieveRealTimeAlert(final RealTimeAlertRequest request) {
         return alertConsumer.retrieveRealTimeAlert(request);
     }
 
+
+    public ScriptingLoadData loadScripting(int serverId, String counterName) {
+        return this.alertScriptingConsumer.loadAlertScripting(serverId,counterName);
+    }
+
+    public ScriptingSaveStateData setConfigScripting(int serverId, String counterName, SetConfigRequest setConfigRequest) {
+        return this.alertScriptingConsumer.setConfigScripting(serverId,counterName,setConfigRequest);
+    }
+
+    public ScriptingSaveStateData setRuleScripting(int serverId, String counterName, SetConfigRequest setConfigRequest) {
+        return this.alertScriptingConsumer.setRuleScripting(serverId,counterName,setConfigRequest);
+
+    }
+
+    public ScriptingLogStateData readAlertScripting(int serverId, long loop, long index) {
+        return this.alertScriptingConsumer.readAlertScripting(serverId,loop,index);
+    }
+
+    public RealTimeAlertView retrieveLoadTimeAlert(LoadTimeAlertRequest request) {
+        return this.alertConsumer.retrieveLoadTimeAlert(request);
+    }
 }

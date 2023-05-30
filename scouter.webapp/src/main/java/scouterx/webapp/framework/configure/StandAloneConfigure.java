@@ -18,6 +18,7 @@
 
 package scouterx.webapp.framework.configure;
 
+import lombok.extern.slf4j.Slf4j;
 import scouter.lang.conf.ConfObserver;
 import scouter.lang.conf.ConfigDesc;
 import scouter.lang.conf.ConfigValueType;
@@ -26,13 +27,7 @@ import scouter.lang.conf.ValueType;
 import scouter.lang.value.ListValue;
 import scouter.lang.value.MapValue;
 import scouter.net.NetConstants;
-import scouter.util.FileUtil;
-import scouter.util.StrMatch;
-import scouter.util.StringEnumer;
-import scouter.util.StringKeyLinkedMap;
-import scouter.util.StringSet;
-import scouter.util.StringUtil;
-import scouter.util.ThreadUtil;
+import scouter.util.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +42,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+@Slf4j
 public class StandAloneConfigure extends Thread {
 	private static StandAloneConfigure instance = null;
 	public final static String CONF_DIR = "./conf/";
@@ -234,12 +229,20 @@ public class StandAloneConfigure extends Thread {
 		List<ServerConfig> list = Stream.of(this.net_collector_ip_port_id_pws.split(","))
 				.map(s -> {
 					String val[] = s.split(":");
-					return new ServerConfig(val[0], val[1], val[2], val[3]);
+					return new ServerConfig(val[0], val[1], val[2], getDecryption(val[3]));
 				}).collect(Collectors.toList());
 
 		return list;
 	}
+	private String getDecryption(String value){
+		if(value.startsWith("{encode}")){
+			String enc =  StringUtil.cutLastString(value,'}');
+			return CipherUtil.decode(enc);
+		}else {
+			return value;
+		}
 
+	}
 	private StringSet getStringSet(String key, String deli) {
 		StringSet set = new StringSet();
 		String v = getValue(key);

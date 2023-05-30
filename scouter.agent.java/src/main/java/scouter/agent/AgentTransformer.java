@@ -21,39 +21,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import scouter.agent.asm.AddFieldASM;
-import scouter.agent.asm.ApiCallResponseObjectASM;
-import scouter.agent.asm.ApicallASM;
-import scouter.agent.asm.ApicallInfoASM;
-import scouter.agent.asm.ApicallJavaHttpRequestASM;
-import scouter.agent.asm.ApicallSpringHandleResponseASM;
-import scouter.agent.asm.ApicallSpringHttpAccessorASM;
-import scouter.agent.asm.ApicallWebClientInfoASM;
-import scouter.agent.asm.ApicallWebClientResponseASM;
-import scouter.agent.asm.CapArgsASM;
-import scouter.agent.asm.CapReturnASM;
-import scouter.agent.asm.CapThisASM;
-import scouter.agent.asm.HttpReactiveServiceASM;
-import scouter.agent.asm.HttpServiceASM;
-import scouter.agent.asm.IASM;
-import scouter.agent.asm.InitialContextASM;
-import scouter.agent.asm.JDBCConnectionOpenASM;
-import scouter.agent.asm.JDBCDriverASM;
-import scouter.agent.asm.JDBCGetConnectionASM;
-import scouter.agent.asm.JDBCPreparedStatementASM;
-import scouter.agent.asm.JDBCResultSetASM;
-import scouter.agent.asm.JDBCStatementASM;
-import scouter.agent.asm.JspServletASM;
-import scouter.agent.asm.MapImplASM;
-import scouter.agent.asm.MethodASM;
-import scouter.agent.asm.ScouterClassWriter;
-import scouter.agent.asm.ServiceASM;
-import scouter.agent.asm.SocketASM;
-import scouter.agent.asm.SpringReqMapASM;
-import scouter.agent.asm.SqlMapASM;
-import scouter.agent.asm.UserExceptionASM;
-import scouter.agent.asm.UserExceptionHandlerASM;
-import scouter.agent.asm.UserTxASM;
+import scouter.agent.asm.*;
 import scouter.agent.asm.asyncsupport.AsyncContextDispatchASM;
 import scouter.agent.asm.asyncsupport.CallRunnableASM;
 import scouter.agent.asm.asyncsupport.CoroutineThreadNameASM;
@@ -74,6 +42,7 @@ import scouter.agent.asm.redis.JedisProtocolASM;
 import scouter.agent.asm.redis.LettuceASM;
 import scouter.agent.asm.redis.RedisCacheKeyASM;
 import scouter.agent.asm.redis.RedisKeyASM;
+import scouter.agent.asm.redis.RedissonReadWriteASM;
 import scouter.agent.asm.test.MongoModifyASM;
 import scouter.agent.asm.test.ReactorModifyASM;
 import scouter.agent.asm.util.AsmUtil;
@@ -166,6 +135,7 @@ public class AgentTransformer implements ClassFileTransformer {
         temp.add(new RedisCacheKeyASM());
         temp.add(new JedisProtocolASM());
         temp.add(new LettuceASM());
+        temp.add(new RedissonReadWriteASM());
         temp.add(new KafkaProducerASM());
         temp.add(new RabbitPublisherASM());
 
@@ -173,6 +143,7 @@ public class AgentTransformer implements ClassFileTransformer {
         temp.add(new HystrixCommandASM());
 
         temp.add(new SocketASM());
+        temp.add(new FileRWASM());
         temp.add(new JspServletASM());
         temp.add(new MapImplASM());
         temp.add(new UserExceptionASM());
@@ -186,18 +157,20 @@ public class AgentTransformer implements ClassFileTransformer {
 
     // //////////////////////////////////////////////////////////////
     // boot class이지만 Hooking되어야하는 클래스를 등록한다.
-    private static HashMap asynchook = new HashMap();
+    private static final HashMap<Integer, String> asynchook = new HashMap<Integer, String>();
 
     static {
         asynchook.put("sun/net/www/protocol/http/HttpURLConnection".hashCode(), "sun/net/www/protocol/http/HttpURLConnection");
         asynchook.put("sun/net/www/http/HttpClient".hashCode(), "sun/net/www/http/HttpClient");
         asynchook.put("java/net/Socket".hashCode(), "java/net/Socket");
+        asynchook.put("java/io/FileInputStream".hashCode(),"java/io/FileInputStream");
+        asynchook.put("java/io/FileOutputStream".hashCode(),"java/io/FileOutputStream");
         asynchook.put("java/nio/channels/SocketChannel".hashCode(), "java/nio/channels/SocketChannel");
         asynchook.put("sun/nio/ch/SocketChannelImpl".hashCode(), "sun/nio/ch/SocketChannelImpl");
         asynchook.put("javax/naming/InitialContext".hashCode(), "javax/naming/InitialContext");
     }
 
-    private Configure conf = Configure.getInstance();
+    private final Configure conf = Configure.getInstance();
     private Logger.FileLog bciOut;
 
     public byte[] transform(final ClassLoader loader, String className, final Class classBeingRedefined,
@@ -218,7 +191,7 @@ public class AgentTransformer implements ClassFileTransformer {
                     return null;
                 }
                 if (loader == null) {
-                    if (conf._hook_boot_prefix == null || conf._hook_boot_prefix.length() == 0 || false == className.startsWith(conf._hook_boot_prefix)) {
+                    if (conf._hook_boot_prefix == null || conf._hook_boot_prefix.length() == 0 || !className.startsWith(conf._hook_boot_prefix)) {
                         return null;
                     }
                 }
@@ -288,8 +261,8 @@ public class AgentTransformer implements ClassFileTransformer {
         System.arraycopy(interfaces, 0, classes, 0, interfaces.length);
         classes[classes.length-1] = superName;
 
-        for (int i = 0; i < classes.length; i++) {
-            if (isMapImpl(classes[i], loader)) {
+        for (String aClass : classes) {
+            if (isMapImpl(aClass, loader)) {
                 return true;
             }
         }

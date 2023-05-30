@@ -80,6 +80,8 @@ public class JavaAgent {
 		redefineClasses.put("java.util.concurrent.AbstractExecutorService");
 		redefineClasses.put("java.util.concurrent.ThreadPoolExecutor");
 		redefineClasses.put("java.lang.Thread");
+		redefineClasses.put("java.io.FileInputStream");
+		redefineClasses.put("java.io.FileOutputStream");
 
 		//java.lang.invoke.LambdaMetafactory.*,java.lang.invoke.CallSite.*,
 		//java.lang.invoke.ConstantCallSite.*,

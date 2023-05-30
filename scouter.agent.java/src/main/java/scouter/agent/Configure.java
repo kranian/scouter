@@ -329,6 +329,8 @@ public class Configure extends Thread {
     public boolean profile_force_end_stuck_alert = true;
     @ConfigDesc("stuck service millis for forcibly ends xlog profile")
     public int profile_force_end_stuck_millis = 300000;
+    @ConfigDesc("ignore metering when forcibly ends xlog profile.")
+    public boolean profile_force_end_stuck_ignore_metering = false;
 
     //Auto dump options on exceeded process cpu
     @ConfigDesc("Enable the function to generate dump file when this process cpu is over than the set threshold")
@@ -665,6 +667,9 @@ public class Configure extends Thread {
     @ConfigValueType(ValueType.COMMA_SEPARATED_VALUE)
     public String hook_jdbc_wrapping_driver_patterns = "";
 
+    @ConfigDesc("CallStateMent Set Oracle Procedure Parameter Capture")
+    public boolean hook_jdbc_oracle_cstat_capture_enabled = true;
+
     @ConfigDesc("Exception class patterns - These will seem as error on xlog view.\n (ex) my.app.BizException,my.app.exception.*Exception")
     @ConfigValueType(ValueType.COMMA_SEPARATED_VALUE)
     public String hook_exception_class_patterns = "";
@@ -733,6 +738,11 @@ public class Configure extends Thread {
     public boolean _hook_dbconn_enabled = true;
     @ConfigDesc("")
     public boolean _hook_cap_enabled = true;
+
+
+    @ConfigDesc("")
+    public boolean _hook_file_enabled = true;
+
     @ConfigDesc("")
     public boolean _hook_methods_enabled = true;
     @ConfigDesc("")
@@ -845,6 +855,8 @@ public class Configure extends Thread {
     @ConfigDesc("Path to jsp to collect enduser data")
     public String enduser_trace_endpoint_url = "/_scouter_browser.jsp";
 
+    @ConfigDesc("Whether the plugin action is loaded")
+    public boolean scouter_plugin_enabled;
     //Experimental(ignoreset)
     public boolean __experimental = false;
     public boolean __control_connection_leak_autoclose_enabled = false;
@@ -1055,6 +1067,7 @@ public class Configure extends Thread {
         this.hook_jdbc_stmt_classes = getValue("hook_jdbc_stmt_classes", "");
         this.hook_jdbc_rs_classes = getValue("hook_jdbc_rs_classes", "");
         this.hook_jdbc_wrapping_driver_patterns = getValue("hook_jdbc_wrapping_driver_patterns", "");
+        this.hook_jdbc_oracle_cstat_capture_enabled = getBoolean("hook_jdbc_oracle_cstat_capture_enabled", true);
         this.hook_exception_class_patterns = getValue("hook_exception_class_patterns", "");
         this.hook_exception_exclude_class_patterns = getValue("hook_exception_exclude_class_patterns", "");
         if(StringUtil.isEmpty(this.hook_exception_exclude_class_patterns)) {
@@ -1198,6 +1211,7 @@ public class Configure extends Thread {
         this._psts_dump_max_count = getInt("_psts_dump_max_count", 100);
         this._psts_progressive_reactor_thread_trace_enabled = getBoolean("_psts_progressive_reactor_dump_enabled", true);
 
+        this.scouter_plugin_enabled = getBoolean("scouter_plugin_enabled",false);
         // 웹시스템으로 부터 WAS 사이의 성능과 어떤 웹서버가 요청을 보내 왔는지를 추적하는 기능을 ON/OFF하고
         // 관련 키정보를 지정한다.
         this.trace_webserver_enabled = getBoolean("trace_webserver_enabled", false);

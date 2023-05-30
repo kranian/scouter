@@ -29,20 +29,8 @@ import scouter.agent.error.RESULTSET_LEAK_SUSPECT;
 import scouter.agent.error.STATEMENT_LEAK_SUSPECT;
 import scouter.agent.error.USERTX_NOT_CLOSE;
 import scouter.agent.netio.data.DataProxy;
-import scouter.agent.plugin.AbstractPlugin;
-import scouter.agent.plugin.PluginAppServiceTrace;
-import scouter.agent.plugin.PluginBackThreadTrace;
-import scouter.agent.plugin.PluginCaptureTrace;
-import scouter.agent.plugin.PluginHttpServiceTrace;
-import scouter.agent.plugin.PluginSpringControllerCaptureTrace;
-import scouter.agent.proxy.HttpTraceFactory;
-import scouter.agent.proxy.IHttpTrace;
-import scouter.agent.proxy.IKafkaTracer;
-import scouter.agent.proxy.ILettuceTrace;
-import scouter.agent.proxy.IReactiveSupport;
-import scouter.agent.proxy.KafkaTraceFactory;
-import scouter.agent.proxy.LettuceTraceFactory;
-import scouter.agent.proxy.ReactiveSupportFactory;
+import scouter.agent.plugin.*;
+import scouter.agent.proxy.*;
 import scouter.agent.summary.ServiceSummary;
 import scouter.agent.wrapper.async.WrTask;
 import scouter.agent.wrapper.async.WrTaskCallable;
@@ -53,24 +41,9 @@ import scouter.lang.pack.AlertPack;
 import scouter.lang.pack.DroppedXLogPack;
 import scouter.lang.pack.XLogPack;
 import scouter.lang.pack.XLogTypes;
-import scouter.lang.step.DispatchStep;
-import scouter.lang.step.HashedMessageStep;
-import scouter.lang.step.MessageStep;
-import scouter.lang.step.MethodStep;
-import scouter.lang.step.MethodStep2;
-import scouter.lang.step.ParameterizedMessageStep;
-import scouter.lang.step.ThreadCallPossibleStep;
+import scouter.lang.step.*;
 import scouter.lang.value.MapValue;
-import scouter.util.ArrayUtil;
-import scouter.util.ByteArrayKeyLinkedMap;
-import scouter.util.HashUtil;
-import scouter.util.Hexa32;
-import scouter.util.IPUtil;
-import scouter.util.KeyGen;
-import scouter.util.ObjectUtil;
-import scouter.util.StringUtil;
-import scouter.util.SysJMX;
-import scouter.util.ThreadUtil;
+import scouter.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -347,7 +320,7 @@ public class TraceMain {
         Stat stat = new Stat(ctx, req, res);
         stat.isStaticContents = ctx.isStaticContents;
 
-        if (stat.isStaticContents == false) {
+        if (!stat.isStaticContents) {
             if (ctx.xType != XLogTypes.ASYNCSERVLET_DISPATCHED_SERVICE) {
                 PluginHttpServiceTrace.start(ctx, req, res, http0, isReactive);
             }
@@ -665,8 +638,11 @@ public class TraceMain {
             pack.b3Mode = ctx.b3Mode;
 
             delayedServiceManager.checkDelayedService(pack, ctx.serviceName);
-            metering(pack);
-            meteringInteraction(ctx, pack);
+
+            if (!ctx.skipMetering) {
+                metering(pack);
+                meteringInteraction(ctx, pack);
+            }
 
             //send all child xlogs, and check it again on the collector server. (follows parent's discard type)
             if ((discardMode != XLogDiscard.DISCARD_ALL && discardMode != XLogDiscard.DISCARD_ALL_FORCE)
@@ -938,8 +914,10 @@ public class TraceMain {
             pack.text5 = ctx.text5;
 
             delayedServiceManager.checkDelayedService(pack, ctx.serviceName);
-            metering(pack);
-            meteringInteraction(ctx, pack);
+            if (!ctx.skipMetering) {
+                metering(pack);
+                meteringInteraction(ctx, pack);
+            }
 
             //send all child xlogs, and check it again on the collector server. (follows parent's discard type)
             if ((discardMode != XLogDiscard.DISCARD_ALL && discardMode != XLogDiscard.DISCARD_ALL_FORCE)
@@ -2017,25 +1995,53 @@ public class TraceMain {
     }
 
     static ILettuceTrace lettuceTracer;
+    static IRedissonTrace redissonTrace;
+
+    public static Object startRedissonCommand(Object redissonConn, byte[] key, Object redisCommand) {
+        if (TraceContextManager.isForceDiscarded()) {
+            return null;
+        }
+        TraceContext ctx = TraceContextManager.getContext();
+        if (ctx == null) {
+            return null;
+        }
+        if (redissonTrace == null) {
+            redissonTrace = RedissonTraceFactory.create(redissonConn.getClass().getClassLoader());
+        }
+
+        String command = redissonTrace.getCommand(redisCommand);
+        if (command == null) return null;
+
+        redissonTrace.startRedis(ctx, redissonConn);
+        String args = redissonTrace.parseArgs(key);
+
+        ParameterizedMessageStep step = new ParameterizedMessageStep();
+        step.start_time = (int) (System.currentTimeMillis() - ctx.startTime);
+        step.putTempMessage("command", command);
+        step.putTempMessage("args", args);
+        ctx.profile.push(step);
+
+        return new LocalContext(ctx, step);
+    }
+
+    public static void endRedissonCommand(Object localContext, Throwable thr) {
+        endLettuceCommand(localContext, thr);
+    }
 
     public static Object startLettuceCommand(Object channel, Object redisCommand) {
         if (TraceContextManager.isForceDiscarded()) {
             return null;
         }
-
         TraceContext ctx = TraceContextManager.getContext();
         if (ctx == null) {
             return null;
         }
-
         if(redisCommand instanceof Collection) {
             return null;
         }
-
         if (lettuceTracer == null) {
             lettuceTracer = LettuceTraceFactory.create(channel.getClass().getClassLoader());
         }
-
         String command = lettuceTracer.getCommand(redisCommand);
         if (command == null) return null;
 
@@ -2049,7 +2055,6 @@ public class TraceMain {
         ctx.profile.push(step);
 
         return new LocalContext(ctx, step);
-
     }
 
     public static void endLettuceCommand(Object localContext, Throwable thr) {
@@ -2113,6 +2118,73 @@ public class TraceMain {
                 meterInteraction.add(elapsed, thr != null);
             }
         }
+    }
+
+    //--
+    public static Object openWriteFileStart(Object file) {
+        TraceContext ctx = TraceContextManager.getContext();
+        if (ctx == null) {
+            return null;
+        }
+
+        HashedMessageStep step = new HashedMessageStep();
+        step.hash = DataProxy.sendHashedMessage(file == null ? "file write: null" : "file write: " + file);
+        step.start_time = (int) (System.currentTimeMillis() - ctx.startTime);
+        step.time = 0;
+        ctx.profile.push(step);
+        return new LocalContext(ctx,step);
+
+
+    }
+    public static void openWriteFileEnd(Object localContext, Throwable thr) {
+        if(localContext != null){
+            Logger.trace("openWriteFileEnd file:write="+localContext+thr);
+            LocalContext lctx = (LocalContext)localContext;
+            TraceContext tctx = lctx.context;
+            if(tctx != null && thr == null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
+                tctx.profile.pop(stepSingle);
+            }else if(tctx != null && thr != null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
+                tctx.profile.pop(stepSingle);
+                int hash = DataProxy.sendError(thr.toString());
+                tctx.error = hash;
+            }
+        }
+
+    }
+    public static Object openReadFileStart(Object file) {
+        TraceContext ctx = TraceContextManager.getContext();
+        if (ctx == null) {
+            return null;
+        }
+
+        HashedMessageStep step = new HashedMessageStep();
+        step.hash = DataProxy.sendHashedMessage(file == null ? "file open: noname" : "file open: " + file);
+        step.start_time = (int) (System.currentTimeMillis() - ctx.startTime);
+        step.time = 0;
+        ctx.profile.push(step);
+        return new LocalContext(ctx,step);
+    }
+    public static void openReadFileEnd(Object localContext, Throwable thr) {
+        if(localContext != null){
+            LocalContext lctx = (LocalContext)localContext;
+            TraceContext tctx = lctx.context;
+            if(tctx != null && thr == null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
+                tctx.profile.pop(stepSingle);
+            }else if(tctx != null && thr != null){
+                HashedMessageStep stepSingle = (HashedMessageStep)lctx.stepSingle;
+                stepSingle.time = (int) (System.currentTimeMillis() - tctx.startTime) - stepSingle.start_time;
+                tctx.profile.pop(stepSingle);
+                int hash = DataProxy.sendError(thr.toString());
+                tctx.error = hash;
+            }
+        }
+
     }
 
 }

@@ -23,13 +23,16 @@ import scouter.lang.pack.AlertPack;
 import scouter.lang.pack.MapPack;
 import scouter.lang.pack.Pack;
 import scouter.net.RequestCmd;
+import scouter.util.StringUtil;
 import scouterx.webapp.framework.client.net.TcpProxy;
 import scouterx.webapp.model.scouter.SAlert;
+import scouterx.webapp.request.LoadTimeAlertRequest;
 import scouterx.webapp.request.RealTimeAlertRequest;
 import scouterx.webapp.view.RealTimeAlertView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
@@ -63,6 +66,47 @@ public class AlertConsumer {
 			});
 		}
 
+		return alertView;
+	}
+
+	public RealTimeAlertView retrieveLoadTimeAlert(LoadTimeAlertRequest request) {
+		MapPack paramPack = new MapPack();
+
+		paramPack.put(ParamConstant.OFFSET_LOOP, request.getLoop());
+		paramPack.put(ParamConstant.OFFSET_INDEX, request.getIndex());
+		paramPack.put(ParamConstant.DATE, request.getYyyymmdd());
+		paramPack.put(ParamConstant.STIME, request.getStartTimeMillis());
+		paramPack.put(ParamConstant.ETIME, request.getEndTimeMillis());
+
+		paramPack.put(ParamConstant.COUNT, request.getCount());
+		if(StringUtil.isNotEmpty(request.getLevel())  && !Objects.equals(request.getLevel(),"ALL")){
+			paramPack.put(ParamConstant.LEVEL, request.getLevel());
+		}
+		if(StringUtil.isNotEmpty(request.getObjectName())){
+			paramPack.put(ParamConstant.OBJECT, request.getObjectName());
+		}
+		if(StringUtil.isNotEmpty(request.getKeyword())){
+			paramPack.put(ParamConstant.KEY, request.getKeyword());
+		}
+
+		List<SAlert> alertList = new ArrayList<>();
+		RealTimeAlertView alertView = new RealTimeAlertView();
+		alertView.setAlerts(alertList);
+		try (TcpProxy tcpProxy = TcpProxy.getTcpProxy(request.getServerId())) {
+			tcpProxy.process(RequestCmd.ALERT_REAL_TIME, paramPack, in -> {
+				Pack packet = in.readPack();
+				if (packet instanceof MapPack) {
+					MapPack metaPack = (MapPack) packet;
+					alertView.setOffset1(metaPack.getLong(ParamConstant.OFFSET_LOOP));
+					alertView.setOffset2(metaPack.getInt(ParamConstant.OFFSET_INDEX));
+				} else {
+					AlertPack alertPack = (AlertPack) packet;
+					if (packet != null) {
+						alertList.add(SAlert.of(alertPack, request.getYyyymmdd(), request.getServerId()));
+					}
+				}
+			});
+		}
 		return alertView;
 	}
 }

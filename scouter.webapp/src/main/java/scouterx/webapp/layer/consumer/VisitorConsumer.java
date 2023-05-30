@@ -120,10 +120,9 @@ public class VisitorConsumer {
         try (TcpProxy tcpProxy = TcpProxy.getTcpProxy(server)) {
             results = tcpProxy.process(RequestCmd.VISITOR_LOADHOUR_GROUP, param);
         }
-
         return results.stream()
                 .map(pack -> (MapPack) pack)
-                .map(VisitorGroup::of)
+                .flatMap(VisitorGroup::collect)
                 .collect(Collectors.toList());
     }
 

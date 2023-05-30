@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
+import scouter.agent.Configure;
 import scouter.agent.asm.util.AsmUtil;
 import scouter.agent.trace.TraceSQL;
 
@@ -32,6 +33,7 @@ public class PsSetMV extends LocalVariablesSorter implements Opcodes {
 	private String name;
 	private Type[] args;
 	private static Map<String, String> target = new HashMap<String, String>();
+	private static Map<String, String> targetOra = new HashMap<String, String>();
 
 	static {
 		target.put("setNull", "(II)V");
@@ -53,6 +55,35 @@ public class PsSetMV extends LocalVariablesSorter implements Opcodes {
 		target.put("setTime", "(ILjava/sql/Time;)V");
 		target.put("setTimestamp", "(ILjava/sql/Timestamp;)V");
 		target.put("setURL", "(ILjava/net/URL;)V"); //
+
+
+		// Ora Process
+		targetOra.put("setNullInternal", "(II)V");
+		targetOra.put("setByteInternal", "(IB)V");
+		targetOra.put("setBooleanInternal", "(IZ)V");
+		targetOra.put("setShortInternal", "(IS)V");
+		targetOra.put("setIntInternal", "(II)V");
+		targetOra.put("setFloatInternal", "(IF)V");
+		targetOra.put("setLongInternal", "(IJ)V");
+		targetOra.put("setDoubleInternal", "(ID)V");
+		targetOra.put("setBigDecimalInternal", "(ILjava/math/BigDecimal;)V");
+		targetOra.put("setBlobInternal", "(ILjava/sql/Blob;)V");
+		targetOra.put("setClobInternal", "(ILjava/sql/Clob;)V");
+		targetOra.put("setObjectInternal", "(ILjava/lang/Object;)V");
+		targetOra.put("setStringInternal", "(ILjava/lang/String;)V");
+		targetOra.put("setDateInternal", "(ILjava/sql/Date;)V");
+		targetOra.put("setTimeInternal", "(ILjava/sql/Time;)V");
+		targetOra.put("setTimestampInternal", "(ILjava/sql/Timestamp;)V");
+		targetOra.put("setURLInternal", "(ILjava/net/URL;)V");
+	}
+
+	public static String getSetSignature(String owner,String name) {
+
+		if(Configure.getInstance().hook_jdbc_oracle_cstat_capture_enabled){
+			return owner.startsWith("oracle")? targetOra.get(name) : target.get(name);
+		}else{
+			return target.get(name);
+		}
 	}
 
 	public static String getSetSignature(String name) {
