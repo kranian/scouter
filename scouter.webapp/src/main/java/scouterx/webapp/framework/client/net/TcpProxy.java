@@ -202,6 +202,7 @@ public class TcpProxy implements AutoCloseable {
                 throw ErrorState.COLLECTOR_INVALID_SESSION.newBizException();
             }
         } catch (Throwable e) {
+            log.error("tcp message processing error",e);
             tcp.close();
             throw new RuntimeException(e);
         }

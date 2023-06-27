@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AgentModelThread extends Thread {
 
@@ -49,7 +50,7 @@ public class AgentModelThread extends Thread {
 		return instance;
 	}
 
-	private Map<Integer, AgentObject> agentMap = new HashMap<Integer, AgentObject>();
+	private Map<Integer, AgentObject> agentMap = new ConcurrentHashMap<>();
 	
 	ArrayList<ObjectPack> allAgentList = new ArrayList<ObjectPack>();
 	
@@ -70,7 +71,7 @@ public class AgentModelThread extends Thread {
 	}
 
 	public synchronized void fetchObjectList() {
-		Map<Integer, AgentObject> tempAgentMap = new HashMap<Integer, AgentObject>();
+//		Map<Integer, AgentObject> tempAgentMap = new HashMap<Integer, AgentObject>();
 		ArrayList<ObjectPack> objectPackList = new ArrayList<ObjectPack>();
 		boolean existUnknownType = false;
 		existServerSet.clear();
@@ -97,14 +98,14 @@ public class AgentModelThread extends Thread {
 						String objType = m.objType;
 						int objHash = m.objHash;
 						String objName = m.objName;
-						if (tempAgentMap.containsKey(objHash)) {
-							AgentObject oldAgent = tempAgentMap.get(objHash);
+						if (agentMap.containsKey(objHash)) {
+							AgentObject oldAgent = agentMap.get(objHash);
 							if (oldAgent.isAlive()) {
 								continue;
 							}
 						}
 						AgentObject agentObject = new AgentObject(objType, objHash, objName, serverId);
-						tempAgentMap.put(objHash, agentObject);
+						agentMap.put(objHash, agentObject);
 						agentObject.objPack = m;
 						if (counterEngine.isUnknownObjectType(objType)) {
 							existUnknownType = true;
@@ -122,7 +123,7 @@ public class AgentModelThread extends Thread {
 		}
 		
 		allAgentList = objectPackList;
-		agentMap = tempAgentMap;
+//		agentMap = tempAgentMap;
 		this.existUnknownType = existUnknownType;
 	}
 	
