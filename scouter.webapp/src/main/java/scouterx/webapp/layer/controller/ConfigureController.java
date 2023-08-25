@@ -132,4 +132,36 @@ public class ConfigureController {
         List<ConfObjectState> resultList= configureService.saveObjTypConfig(objType,server,configRequest);
         return CommonResultView.success(resultList);
     }
+    @PUT
+    @Path("/set/kv/{objFamily}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CommonResultView<List<ConfObjectState>> setKVObjFamilyConfig(
+            @PathParam("objFamily") String objFamily,
+            @QueryParam("serverId") int serverId,
+            @Valid final SetConfigKvRequest configRequest) {
+        Server server = ServerManager.getInstance().getServerIfNullDefault(serverId);
+        List<ConfObjectState> resultList= configureService.saveObjFamilyConfig(objFamily,server,configRequest);
+        return CommonResultView.success(resultList);
+    }
+
+    @PUT
+    @Path("/set/kv/ofTypeAll/{objType}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CommonResultView<List<ConfObjectState>> setKVObjTypeAllConfig(
+            @PathParam("objType") String objType,
+            @Valid final SetConfigKvRequest configRequest) {
+        Server server = ServerManager.getInstance().getServerIfNullDefault(0);
+        List<ConfObjectState> resultList= configureService.saveObjTypAllConfig(objType,server,configRequest);
+        return CommonResultView.success(resultList);
+    }
+    @PUT
+    @Path("/set/kv/ofFamilyAll/{objFamily}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CommonResultView<List<ConfObjectState>> setKVObjFamilyAllConfig(
+            @PathParam("objFamily") String objFamily,
+            @Valid final SetConfigKvRequest configRequest) {
+        Server server = ServerManager.getInstance().getServerIfNullDefault(0);
+        List<ConfObjectState> resultList= configureService.saveObjFamilyAllConfig(objFamily,server,configRequest);
+        return CommonResultView.success(resultList);
+    }
 }
