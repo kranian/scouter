@@ -44,6 +44,18 @@ public class ConfigureService {
         Optional<List<ConfObjectState>> optional = this.configureKVHandleConsumer.applyConfig(ConfApplyScopeEnum.TYPE_IN_SERVER,configRequest,objType,server);
         return optional.isPresent() ? optional.get() : Collections.emptyList();
     }
+    public List<ConfObjectState> saveObjFamilyConfig(String objFamily, Server server, SetConfigKvRequest configRequest) {
+        Optional<List<ConfObjectState>> optional = this.configureKVHandleConsumer.applyConfig(ConfApplyScopeEnum.FAMILY_IN_SERVER,configRequest,objFamily,server);
+        return optional.isPresent() ? optional.get() : Collections.emptyList();
+    }
+    public List<ConfObjectState> saveObjTypAllConfig(String objType, Server server, SetConfigKvRequest configRequest) {
+        Optional<List<ConfObjectState>> optional = this.configureKVHandleConsumer.applyConfig(ConfApplyScopeEnum.TYPE_ALL,configRequest,objType,server);
+        return optional.isPresent() ? optional.get() : Collections.emptyList();
+    }
+    public List<ConfObjectState> saveObjFamilyAllConfig(String objFamily, Server server, SetConfigKvRequest configRequest) {
+        Optional<List<ConfObjectState>> optional = this.configureKVHandleConsumer.applyConfig(ConfApplyScopeEnum.FAMILY_ALL,configRequest,objFamily,server);
+        return optional.isPresent() ? optional.get() : Collections.emptyList();
+    }
 
     public boolean saveKVServerConfig(SetConfigKvRequest configRequest, Server server) {
         return this.configureKVHandleConsumer.saveKVServerConfig(configRequest,server);

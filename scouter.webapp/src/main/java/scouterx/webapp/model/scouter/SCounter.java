@@ -25,6 +25,8 @@ import scouterx.webapp.framework.client.model.AgentModelThread;
 import scouterx.webapp.framework.client.model.AgentObject;
 import scouterx.webapp.framework.client.server.ServerManager;
 
+import java.util.Objects;
+
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
  */
@@ -42,12 +44,12 @@ public class SCounter {
         this.objHash = objHash;
         this.name = name;
         this.value = value;
-
         AgentObject agentObject = AgentModelThread.getInstance().getAgentObject(objHash);
-        CounterEngine counterEngine = ServerManager.getInstance().getServerIfNullDefault(agentObject.getServerId()).getCounterEngine();
-
-        this.displayName = counterEngine.getCounterDisplayName(agentObject.getObjType(), name);
-        this.unit = counterEngine.getCounterUnit(agentObject.getObjType(), name);
-        this.objName = agentObject.getObjName();
+        if(Objects.nonNull(agentObject)) {
+            CounterEngine counterEngine = ServerManager.getInstance().getServerIfNullDefault(agentObject.getServerId()).getCounterEngine();
+            this.displayName = counterEngine.getCounterDisplayName(agentObject.getObjType(), name);
+            this.unit = counterEngine.getCounterUnit(agentObject.getObjType(), name);
+            this.objName = agentObject.getObjName();
+        }
     }
 }

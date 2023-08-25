@@ -699,13 +699,13 @@ public class PluginHelper {
         public String returnTypeName;
     }
 
-    private static List<PluginHelper.Desc> pluginHelperDesc;
+    private static List<Desc> pluginHelperDesc;
 
-    public static synchronized List<PluginHelper.Desc> getPluginHelperDesc() {
+    public static synchronized List<Desc> getPluginHelperDesc() {
         if (pluginHelperDesc != null) {
             return pluginHelperDesc;
         }
-        List<PluginHelper.Desc> descList = new ArrayList<PluginHelper.Desc>();
+        List<Desc> descList = new ArrayList<Desc>();
         Method[] methods = PluginHelper.class.getDeclaredMethods();
         for (Method method : methods) {
             int mod = method.getModifiers();
@@ -729,7 +729,7 @@ public class PluginHelper {
                 }
                 ConfigDesc configDesc = method.getAnnotation(ConfigDesc.class);
 
-                PluginHelper.Desc desc = new PluginHelper.Desc();
+                Desc desc = new Desc();
                 desc.methodName = method.getName();
                 desc.returnTypeName = method.getReturnType().getName();
                 if (configDesc != null) {

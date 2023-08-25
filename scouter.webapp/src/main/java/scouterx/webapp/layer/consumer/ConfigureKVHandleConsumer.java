@@ -5,6 +5,7 @@ import scouter.lang.pack.MapPack;
 import scouter.net.RequestCmd;
 import scouterx.webapp.framework.client.net.TcpProxy;
 import scouterx.webapp.framework.client.server.Server;
+import scouterx.webapp.framework.client.server.ServerManager;
 import scouterx.webapp.layer.service.ObjectService;
 import scouterx.webapp.model.configure.ConfApplyScopeEnum;
 import scouterx.webapp.model.configure.ConfObjectState;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author yosong.heo (yosong.heo@gmail.com) on 2023. 2. 18.
@@ -53,19 +55,79 @@ public class ConfigureKVHandleConsumer {
         }
         return isSuccess;
     }
-    public Optional<List<ConfObjectState>> applyConfig(ConfApplyScopeEnum scope, SetConfigKvRequest configRequest, String objType, Server server) {
+    public Optional<List<ConfObjectState>> applyConfig(ConfApplyScopeEnum scope, SetConfigKvRequest configRequest, String objTypeOrFamily, Server server) {
         List<ConfObjectState> resulList = null;
         
         switch (scope) {
             case TYPE_IN_SERVER:
-                resulList = applyConfigToTypeInServer(configRequest.getKey(), configRequest.getValue(), objType, server);
+                resulList = applyConfigToTypeInServer(configRequest.getKey(), configRequest.getValue(), objTypeOrFamily, server);
+                break;
+            case TYPE_ALL:
+                resulList = applyConfigToTypeAllServer(configRequest.getKey(), configRequest.getValue(), objTypeOrFamily);
+                break;
+            case FAMILY_ALL:
+                resulList = applyConfigToFamilyAllServer(configRequest.getKey(), configRequest.getValue(), objTypeOrFamily);
+                break;
+            case FAMILY_IN_SERVER:
+                resulList = applyConfigToFamilyInServer(configRequest.getKey(), configRequest.getValue(), objTypeOrFamily,server);
                 break;
             default:
         }
         return Optional.ofNullable(resulList);
     }
+    private List<ConfObjectState> applyConfigToFamilyAllServer(String confKey, String confValue, String objFamily){
+        List<Server> allList = ServerManager.getInstance().getAllServerList();
 
+        return allList.stream()
+                .filter(server -> server.isOpen())
+                .flatMap(server ->applyConfigToFamilyInServer(confKey,confValue,objFamily,server).stream())
+                .collect(Collectors.toList());
+    }
+    private List<ConfObjectState> applyConfigToTypeAllServer(String confKey, String confValue, String objType){
+        List<Server>  allList = ServerManager.getInstance().getAllServerList();
+        return allList.stream()
+                .filter(server -> server.isOpen())
+                .flatMap(server ->applyConfigToTypeInServer(confKey,confValue,objType,server).stream())
+                .collect(Collectors.toList());
+    }
 
+    private  List<ConfObjectState> applyConfigToFamilyInServer(String confKey, String confValue, String objFamily, Server server) {
+        List<ConfObjectState> resultList= new ArrayList<>();
+        this.agentService.retrieveObjectList(server)
+                .stream()
+                .filter(object -> objFamily.equals(object.getObjFamily()))
+                .forEach(object -> {
+                    try {
+                        if (!object.isAlive()) {
+                            resultList.add(new ConfObjectState(object.getObjHash(),false));
+                        } else {
+                            String text = loadConfigureText(server.getId(), object.getObjHash());
+                            Pattern pattern = Pattern.compile("(?m)^" + confKey + "\\s*=.*\\n?");
+                            Matcher matcher = pattern.matcher(text);
+                            String replacement = confKey + "=" + confValue + "\n";
+
+                            String replacedText = null;
+                            if (matcher.find()) {
+                                replacedText = matcher.replaceFirst(replacement);
+                            } else {
+                                replacedText = new StringBuilder(text)
+                                        .append("\n\n#auto-added\n")
+                                        .append(replacement).toString();
+                            }
+
+                            if (saveConfigure(server.getId(), object.getObjHash(), replacedText)) {
+                                resultList.add(new ConfObjectState(object.getObjHash(),true));
+                            } else {
+                                resultList.add(new ConfObjectState(object.getObjHash(),false));
+                            }
+                        }
+                    } catch (ConfigLoadException e) {
+                        resultList.add(new ConfObjectState(object.getObjHash(),false));
+                    }
+                });
+
+        return resultList;
+    }
     private  List<ConfObjectState> applyConfigToTypeInServer(String confKey, String confValue, String objType, Server server) {
         List<ConfObjectState> resultList= new ArrayList<>();
         this.agentService.retrieveObjectList(server)

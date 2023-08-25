@@ -29,6 +29,8 @@ import scouterx.webapp.framework.client.model.AgentObject;
 import scouterx.webapp.framework.client.net.TcpProxy;
 import scouterx.webapp.framework.client.server.Server;
 import scouterx.webapp.framework.client.server.ServerManager;
+import scouterx.webapp.framework.configure.ConfigureAdaptor;
+import scouterx.webapp.framework.configure.ConfigureManager;
 import scouterx.webapp.model.scouter.SCounter;
 import scouterx.webapp.request.CounterAvgRequest;
 import scouterx.webapp.request.CounterAvgRequestByObjHashes;
@@ -39,20 +41,14 @@ import scouterx.webapp.request.CounterRequestByType;
 import scouterx.webapp.view.AvgCounterView;
 import scouterx.webapp.view.CounterView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Gun Lee (gunlee01@gmail.com) on 2017. 8. 27.
  */
 public class CounterConsumer {
-
+    private static final ConfigureAdaptor conf = ConfigureManager.getConfigure();
     /**
      * get realtime counters's values by type
      * @param objType
@@ -134,6 +130,7 @@ public class CounterConsumer {
         return new ArrayList<>(counterViewMap.values());
     }
 
+
     private List<CounterView> retrieveCounterInDay(CounterRequest request, Server server, MapPack paramPack) {
         List<CounterView> counterViewList = new ArrayList<>();
         try(TcpProxy tcpProxy = TcpProxy.getTcpProxy(server)) {
@@ -144,21 +141,18 @@ public class CounterConsumer {
                     int objHash = mapPack.getInt(ParamConstant.OBJ_HASH);
                     ListValue timeList = mapPack.getList(ParamConstant.TIME);
                     ListValue valueList = mapPack.getList(ParamConstant.VALUE);
-
                     List<Double> valueToDoubleList = new ArrayList<>();
                     for (int i = 0; i < timeList.size(); i++) {
                         valueToDoubleList.add(valueList.getDouble(i));
                     }
 
                     AgentObject agentObject = AgentModelThread.getInstance().getAgentObject(objHash);
-                    String objType = agentObject.getObjType();
-
                     CounterView counterView = CounterView.builder()
                             .objHash(objHash)
-                            .objName(agentObject.getObjName())
+                            .objName(Objects.nonNull(agentObject)?agentObject.getObjName(): null)
                             .name(request.getCounter())
-                            .displayName(server.getCounterEngine().getCounterDisplayName(objType, request.getCounter()))
-                            .unit(server.getCounterEngine().getCounterUnit(objType, request.getCounter()))
+                            .displayName(server.getCounterEngine().getCounterDisplayName(Objects.nonNull( agentObject)? agentObject.getObjType() : null, request.getCounter()))
+                            .unit(server.getCounterEngine().getCounterUnit( Objects.nonNull(agentObject)? agentObject.getObjType() : null, request.getCounter()))
                             .startTimeMillis(request.getStartTimeMillis())
                             .endTimeMillis(request.getEndTimeMillis())
                             .timeList(Arrays.stream(timeList.toObjectArray()).map(Long.class::cast).collect(Collectors.toList()))
@@ -223,14 +217,13 @@ public class CounterConsumer {
                     }
 
                     AgentObject agentObject = AgentModelThread.getInstance().getAgentObject(objHash);
-                    String objType = agentObject.getObjType();
-
+//                    String objType = agentObject.getObjType();
                     AvgCounterView counterView = AvgCounterView.builder()
                             .objHash(objHash)
-                            .objName(agentObject.getObjName())
+                            .objName(Objects.nonNull(agentObject)? agentObject.getObjName() : null)
                             .name(request.getCounter())
-                            .displayName(server.getCounterEngine().getCounterDisplayName(objType, request.getCounter()))
-                            .unit(server.getCounterEngine().getCounterUnit(objType, request.getCounter()))
+                            .displayName(server.getCounterEngine().getCounterDisplayName(Objects.nonNull(agentObject) ? agentObject.getObjType() : null, request.getCounter()))
+                            .unit(server.getCounterEngine().getCounterUnit(Objects.nonNull(agentObject) ? agentObject.getObjType() : null, request.getCounter()))
                             .fromYmd(request.getStartYmd())
                             .toYmd(request.getEndYmd())
                             .timeList(Arrays.stream(timeList.toObjectArray()).map(Long.class::cast).collect(Collectors.toList()))
@@ -245,6 +238,7 @@ public class CounterConsumer {
                         counterViewInMap.getTimeList().addAll(counterView.getTimeList());
                         counterViewInMap.getValueList().addAll(counterView.getValueList());
                     }
+
                 }
             });
         }

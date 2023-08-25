@@ -125,7 +125,7 @@ public class HttpServer extends Thread {
                 server.start();
                 server.join();
             } catch (Exception e) {
-                scouter.server.Logger.println("HTTP", 10, "Failed to start http server", e);
+                Logger.println("HTTP", 10, "Failed to start http server", e);
             }
         }
     }
